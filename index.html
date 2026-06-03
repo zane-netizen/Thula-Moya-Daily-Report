@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="TM Daily Report">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1B3A1F">
+<title>TM Daily Report</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:rgba(0,0,0,0);-webkit-touch-callout:none}
+:root{
+  --orange:#2E7D32;--dark:#1B3A1F;--green:#1B5E20;
+  --bg:#fff;--bg2:#F4F5F7;--bg3:#E9EAEC;
+  --bdr:#DDE0E6;--bdr2:#C8CCD4;
+  --txt:#1C1E24;--muted:#6B7280;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+html{height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-family:var(--font);font-size:16px;color:var(--txt);background:var(--bg2);min-height:100%;overscroll-behavior:none}
+#app{max-width:540px;margin:0 auto;background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
+
+/* HEADER */
+#hdr{background:var(--dark);color:#fff;padding:14px 16px 12px;padding-top:calc(14px + var(--safe-t));display:flex;align-items:center;gap:12px;flex-shrink:0}
+#logo-wrap{width:46px;height:46px;border:1.5px dashed rgba(255,255,255,.35);border-radius:8px;flex-shrink:0;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
+#logo-wrap img{width:100%;height:100%;object-fit:contain;display:none}
+#logo-wrap .hint{font-size:9px;color:rgba(255,255,255,.5);text-align:center;line-height:1.4;pointer-events:none}
+#logo-inp{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+#hdr-info{flex:1;min-width:0}
+#hdr-title{font-size:15px;font-weight:600}
+#hdr-sub{font-size:11px;color:#A5D6A7;margin-top:1px}
+.orange-bar{height:4px;background:var(--orange);flex-shrink:0}
+
+/* INSTALL BANNER */
+#inst-banner{background:#0A1F0C;color:#fff;padding:10px 14px;font-size:13px;display:none;align-items:center;gap:10px;flex-shrink:0}
+#inst-banner span{flex:1;line-height:1.4}
+#inst-banner .ibtn{background:var(--orange);color:#fff;border:none;border-radius:6px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap}
+#inst-banner .icls{background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:0 4px;font-family:var(--font)}
+
+/* TABS */
+#tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--bdr);flex-shrink:0}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);background:transparent;border:none;border-bottom:2.5px solid transparent;cursor:pointer;font-family:var(--font);-webkit-appearance:none}
+.tab-btn .ico{font-size:18px;line-height:1}
+.tab-btn.on{color:var(--dark);border-bottom-color:var(--orange)}
+
+/* PANELS */
+.panel{display:none;padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1}
+.panel.on{display:block}
+
+/* FORM ELEMENTS */
+.section{background:var(--bg);border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:14px}
+.section-title{font-size:12px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.section-title .ico{font-size:16px}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fg:last-child{margin-bottom:0}
+.fg label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.fg input,.fg select,.fg textarea{border:1px solid var(--bdr2);border-radius:8px;padding:10px 12px;font-size:16px;font-family:var(--font);background:var(--bg);color:var(--txt);width:100%;-webkit-appearance:none;appearance:none;outline:none}
+.fg select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath fill='%236B7280' d='M5 7L0 0h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(232,103,26,.15)}
+.row2{display:flex;gap:10px}
+.row2 .fg{flex:1}
+
+/* YES/NO TOGGLES */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bdr)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-lbl{font-size:14px;font-weight:500}
+.toggle-btns{display:flex;gap:6px}
+.tbtn{padding:7px 16px;border-radius:20px;font-size:13px;font-weight:600;border:1.5px solid var(--bdr2);background:var(--bg);color:var(--muted);cursor:pointer;font-family:var(--font);-webkit-appearance:none}
+.tbtn.yes{background:#EAF3DE;color:#27500A;border-color:#9FCC78}
+.tbtn.no{background:#FAECE7;color:#993C1D;border-color:#F5BCBC}
+
+/* TEAM MEMBERS */
+.member-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.member-row{display:flex;align-items:center;gap:8px}
+.member-row input{flex:1;border:1px solid var(--bdr2);border-radius:8px;padding:10px 12px;font-size:16px;font-family:var(--font);background:var(--bg);color:var(--txt);-webkit-appearance:none;outline:none}
+.member-row input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(232,103,26,.15)}
+.del-member{background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;width:36px;height:36px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-appearance:none;font-family:var(--font)}
+.add-member-btn{background:transparent;border:1.5px dashed var(--bdr2);border-radius:8px;padding:9px;width:100%;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--font);-webkit-appearance:none}
+.add-member-btn:active{background:var(--bg2)}
+
+/* PROGRESS BARS */
+.progress-item{margin-bottom:12px}
+.progress-item:last-child{margin-bottom:0}
+.progress-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.progress-lbl{font-size:14px;font-weight:500}
+.progress-val{font-size:14px;font-weight:700;color:var(--orange);min-width:40px;text-align:right}
+.progress-track{height:10px;background:var(--bg3);border-radius:10px;overflow:hidden;position:relative}
+.progress-fill{height:100%;border-radius:10px;background:var(--orange);transition:width .2s}
+.progress-fill.done{background:var(--green)}
+.progress-fill.zero{background:var(--bg3)}
+input[type=range]{width:100%;margin-top:6px;-webkit-appearance:none;appearance:none;height:6px;border-radius:6px;background:var(--bg3);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:var(--orange);cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--orange);cursor:pointer;border:2px solid #fff}
+
+/* PHOTOS */
+.ph-wrap{position:relative}
+.ph-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border:1.5px dashed var(--bdr2);border-radius:10px;background:var(--bg2);color:var(--muted);font-size:14px;font-family:var(--font);cursor:pointer;-webkit-appearance:none}
+.ph-inp{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
+.pgrid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.pthumb{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0}
+.pthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.pdel{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-appearance:none;line-height:1}
+
+/* PREVIEW */
+.preview-block{background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;line-height:1.7}
+.preview-block h4{font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.preview-row{display:flex;gap:8px;padding:3px 0;border-bottom:1px solid var(--bdr)}
+.preview-row:last-child{border-bottom:none}
+.preview-key{color:var(--muted);font-weight:600;min-width:110px;flex-shrink:0}
+.preview-val{flex:1}
+.prog-preview{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.prog-chip{background:var(--bg);border:1px solid var(--bdr);border-radius:8px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.prog-chip span{font-weight:700;color:var(--orange)}
+.prog-chip span.done{color:var(--green)}
+.prog-chip span.zero{color:var(--muted)}
+
+/* EXPORT BAR */
+#exp-bar{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;padding-bottom:calc(12px + var(--safe-b));border-top:1px solid var(--bdr);background:var(--bg2);flex-shrink:0}
+.ebtn{flex:1;min-width:calc(50% - 4px);padding:12px 8px;border:1px solid var(--bdr2);border-radius:10px;background:var(--bg);color:var(--txt);font-size:13px;font-weight:600;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;-webkit-appearance:none}
+.ebtn.dk{background:var(--dark);color:#fff;border-color:var(--dark)}
+.ebtn.og{background:var(--orange);color:#fff;border-color:var(--orange)}
+.ebtn.gn{background:var(--green);color:#fff;border-color:var(--green);min-width:100%;font-size:14px;padding:14px 8px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="inst-banner">
+    <span>📲 <strong>Add to Home Screen</strong> to use like an app!</span>
+    <button type="button" class="ibtn" onclick="showInstallHelp()">How to install</button>
+    <button type="button" class="icls" onclick="this.parentElement.style.display='none'">✕</button>
+  </div>
+
+  <div id="hdr">
+    <div id="logo-wrap" style="border:none;background:transparent;width:80px;height:46px;">
+      <img id="hdr-logo" src="data:image/png;base64,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" alt="Thula Moya Energy" style="display:block;max-width:80px;max-height:46px;object-fit:contain">
+    </div>
+    <div id="hdr-info">
+      <div id="hdr-title">Thula Moya Daily Report</div>
+      <div id="hdr-sub">Project site report</div>
+    </div>
+  </div>
+  <div class="orange-bar"></div>
+
+  <div id="tabs">
+    <button type="button" class="tab-btn on" onclick="showTab('info',this)"><span class="ico">📋</span>Info</button>
+    <button type="button" class="tab-btn" onclick="showTab('team',this)"><span class="ico">👷</span>Team</button>
+    <button type="button" class="tab-btn" onclick="showTab('work',this)"><span class="ico">🔧</span>Work</button>
+    <button type="button" class="tab-btn" onclick="showTab('progress',this)"><span class="ico">📊</span>Progress</button>
+    <button type="button" class="tab-btn" onclick="showTab('preview',this)"><span class="ico">👁</span>Preview</button>
+  </div>
+
+  <!-- TAB: INFO -->
+  <div class="panel on" id="panel-info">
+
+    <div class="section">
+      <div class="section-title"><span class="ico">📍</span>Site details</div>
+      <div class="fg"><label>Installation type</label>
+        <select id="inst-type">
+          <option value="">Select type...</option>
+          <option>Commercial rooftop</option>
+          <option>Ground-mounted</option>
+          <option>Residential rooftop</option>
+        </select>
+      </div>
+      <div class="fg"><label>Site / project name</label>
+        <input type="text" id="f-site" placeholder="e.g. 23 Hagart Road, Pinetown" autocomplete="off" autocapitalize="words">
+      </div>
+      <div class="fg"><label>Client name</label>
+        <input type="text" id="f-client" placeholder="Client name" autocomplete="off" autocapitalize="words">
+      </div>
+      <div class="fg"><label>Job reference</label>
+        <input type="text" id="f-ref" placeholder="e.g. TM-2025-041" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="ico">📅</span>Date & time</div>
+      <div class="fg"><label>Date</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Arrival time</label>
+          <input type="time" id="f-arrive">
+        </div>
+        <div class="fg"><label>Departure time</label>
+          <input type="time" id="f-depart">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Overtime hours</label>
+          <input type="number" id="f-overtime" placeholder="0" min="0" max="24" step="0.5" style="font-size:16px">
+        </div>
+        <div class="fg"><label>Overtime reason</label>
+          <input type="text" id="f-overtime-reason" placeholder="e.g. Cable tray completion" autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="ico">🌤</span>Site conditions</div>
+      <div class="fg"><label>Weather</label>
+        <select id="f-weather">
+          <option value="">Select...</option>
+          <option>Clear / Sunny</option>
+          <option>Partly cloudy</option>
+          <option>Overcast</option>
+          <option>Light rain</option>
+          <option>Heavy rain</option>
+          <option>Windy</option>
+          <option>Hot</option>
+        </select>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB: TEAM -->
+  <div class="panel" id="panel-team">
+
+    <div class="section">
+      <div class="section-title"><span class="ico">👷</span>Site manager</div>
+      <div class="fg">
+        <input type="text" id="f-manager" placeholder="Site manager name" autocomplete="off" autocapitalize="words">
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="ico">👥</span>Team members</div>
+      <div class="member-list" id="team-list"></div>
+      <button type="button" class="add-member-btn" onclick="addMember('team')">＋ Add team member</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="ico">🧑‍🔧</span>Casuals</div>
+      <div class="member-list" id="casual-list"></div>
+      <button type="button" class="add-member-btn" onclick="addMember('casual')">＋ Add casual</button>
+    </div>
+
+  </div>
+
+  <!-- TAB: WORK -->
+  <div class="panel" id="panel-work">
+
+    <div class="section">
+      <div class="section-title"><span class="ico">✅</span>Work done today</div>
+      <div class="fg">
+        <textarea id="f-work-done" rows="5" placeholder="Describe all work completed today..." style="resize:vertical"></textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="ico">📅</span>Work planned for tomorrow</div>
+      <div class="fg">
+        <textarea id="f-work-planned" rows="4" placeholder="Describe work planned for tomorrow..." style="resize:vertical"></textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="ico">⚠️</span>HSE & compliance</div>
+      <div class="toggle-row">
+        <span class="toggle-lbl">HSE findings</span>
+        <div class="toggle-btns">
+          <button type="button" class="tbtn" id="hse-yes" onclick="setToggle('hse','yes')">Yes</button>
+          <button type="button" class="tbtn no" id="hse-no" onclick="setToggle('hse','no')">No</button>
+        </div>
+      </div>
+      <div class="fg" id="hse-detail-wrap" style="margin-top:10px;display:none">
+        <label>HSE finding details</label>
+        <textarea id="f-hse-detail" rows="3" placeholder="Describe HSE findings..." style="resize:vertical"></textarea>
+      </div>
+      <div class="fg" style="margin-top:10px">
+        <label>Toolbox talk topic</label>
+        <input type="text" id="f-toolbox" placeholder="e.g. Working at heights" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="ico">⏱</span>Delays & materials</div>
+      <div class="toggle-row">
+        <span class="toggle-lbl">Site delays</span>
+        <div class="toggle-btns">
+          <button type="button" class="tbtn" id="delay-yes" onclick="setToggle('delay','yes')">Yes</button>
+          <button type="button" class="tbtn no" id="delay-no" onclick="setToggle('delay','no')">No</button>
+        </div>
+      </div>
+      <div id="delay-detail-wrap" style="display:none">
+        <div class="fg" style="margin-top:10px">
+          <label>Delay duration</label>
+          <input type="text" id="f-delay-dur" placeholder="e.g. 2 hours" autocomplete="off">
+        </div>
+        <div class="fg">
+          <label>Delay description</label>
+          <textarea id="f-delay-desc" rows="3" placeholder="Describe the delay..." style="resize:vertical"></textarea>
+        </div>
+      </div>
+      <div class="toggle-row" style="margin-top:10px">
+        <span class="toggle-lbl">Material shortages</span>
+        <div class="toggle-btns">
+          <button type="button" class="tbtn" id="material-yes" onclick="setToggle('material','yes')">Yes</button>
+          <button type="button" class="tbtn no" id="material-no" onclick="setToggle('material','no')">No</button>
+        </div>
+      </div>
+      <div class="fg" id="material-detail-wrap" style="margin-top:10px;display:none">
+        <label>Material shortage details</label>
+        <textarea id="f-material-detail" rows="3" placeholder="List materials short..." style="resize:vertical"></textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="ico">📷</span>Site photos</div>
+      <div class="ph-wrap">
+        <button type="button" class="ph-btn">
+          <span style="font-size:24px">📷</span>
+          <span><strong>Add site photos</strong><br><span style="font-size:12px">Camera or gallery</span></span>
+        </button>
+        <input type="file" accept="image/*" multiple class="ph-inp" id="photo-inp" onchange="handlePhotos(this)">
+      </div>
+      <div class="pgrid" id="photo-grid"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="ico">📝</span>Additional notes</div>
+      <div class="fg">
+        <textarea id="f-notes" rows="4" placeholder="Any other notes, observations or comments..." style="resize:vertical"></textarea>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB: PROGRESS -->
+  <div class="panel" id="panel-progress">
+    <div class="section">
+      <div class="section-title"><span class="ico">📊</span>Schedule update</div>
+      <div id="progress-items"></div>
+    </div>
+  </div>
+
+  <!-- TAB: PREVIEW -->
+  <div class="panel" id="panel-preview">
+    <div id="preview-content"></div>
+  </div>
+
+  <!-- EXPORT BAR -->
+  <div id="exp-bar">
+    <button type="button" class="ebtn" onclick="doShare()">📤 Share</button>
+    <button type="button" class="ebtn dk" onclick="doPrint()">🖨 Print/PDF</button>
+    <button type="button" class="ebtn gn" id="submit-btn" onclick="doSubmit()">📊 Submit to Google Sheet</button>
+  </div>
+
+</div>
+
+<script>
+var SHEET_URL='https://script.google.com/macros/s/AKfycbzhxEkAqg0zSVdzYHat9-xKR5AeRjLyAcrkAR3C25S-ZPKf4kSNBUPvDQUCFHgfN_8/exec';
+
+var teamMembers=[];
+var casualMembers=[];
+var sitePhotos=[];
+var logoUrl="data:image/png;base64,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";
+var deferredPrompt=null;
+
+var PROGRESS_ITEMS=[
+  'Anchor points','Inverter mounting','Inverter wiring',
+  'Mounting structure','Panels','DC cable tray','DC strings',
+  'AC cable tray','AC cables','DC combiner','AC combiner',
+  'Tie in','Data cables','Earthing'
+];
+var progressVals={};
+for(var i=0;i<PROGRESS_ITEMS.length;i++) progressVals[PROGRESS_ITEMS[i]]=0;
+
+var toggleState={hse:'no',delay:'no',material:'no'};
+
+/* LOGO */
+function uploadLogo(inp){
+  var f=inp.files&&inp.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onloadend=function(){if(r.result){logoUrl=r.result;var img=document.getElementById('hdr-logo');img.src=r.result;img.style.display='block';document.querySelector('#logo-wrap .hint').style.display='none';}};
+  r.readAsDataURL(f);
+  try{inp.value='';}catch(e){}
+}
+
+/* TABS */
+function showTab(name,btn){
+  var panels=document.querySelectorAll('.panel');
+  for(var i=0;i<panels.length;i++)panels[i].classList.remove('on');
+  var tabs=document.querySelectorAll('.tab-btn');
+  for(var i=0;i<tabs.length;i++)tabs[i].classList.remove('on');
+  document.getElementById('panel-'+name).classList.add('on');
+  btn.classList.add('on');
+  if(name==='progress')renderProgress();
+  if(name==='preview')renderPreview();
+}
+
+/* TOGGLES */
+function setToggle(key,val){
+  toggleState[key]=val;
+  var yBtn=document.getElementById(key+'-yes');
+  var nBtn=document.getElementById(key+'-no');
+  yBtn.className='tbtn'+(val==='yes'?' yes':'');
+  nBtn.className='tbtn'+(val==='no'?' no':'');
+  var detailWrap=document.getElementById(key+'-detail-wrap');
+  if(detailWrap)detailWrap.style.display=val==='yes'?'block':'none';
+}
+
+/* TEAM MEMBERS */
+function addMember(type){
+  var list=type==='team'?teamMembers:casualMembers;
+  list.push('');
+  renderMembers(type);
+}
+function removeMember(type,idx){
+  var list=type==='team'?teamMembers:casualMembers;
+  list.splice(idx,1);
+  renderMembers(type);
+}
+function updateMember(type,idx,val){
+  var list=type==='team'?teamMembers:casualMembers;
+  list[idx]=val;
+}
+function renderMembers(type){
+  var list=type==='team'?teamMembers:casualMembers;
+  var el=document.getElementById(type+'-list');
+  var html='';
+  for(var i=0;i<list.length;i++){
+    html+='<div class="member-row">'
+      +'<input type="text" value="'+list[i]+'" placeholder="Full name" autocomplete="off" autocapitalize="words" onchange="updateMember(\''+type+'\','+i+',this.value)">'
+      +'<button type="button" class="del-member" onclick="removeMember(\''+type+'\','+i+')">&#215;</button>'
+      +'</div>';
+  }
+  el.innerHTML=html;
+}
+
+/* PROGRESS */
+function renderProgress(){
+  var el=document.getElementById('progress-items');
+  var html='';
+  for(var i=0;i<PROGRESS_ITEMS.length;i++){
+    var item=PROGRESS_ITEMS[i];
+    var val=progressVals[item];
+    var fillClass=val===100?'done':val===0?'zero':'';
+    html+='<div class="progress-item">'
+      +'<div class="progress-hdr">'
+      +'<span class="progress-lbl">'+item+'</span>'
+      +'<span class="progress-val" id="pval-'+i+'">'+val+'%</span>'
+      +'</div>'
+      +'<div class="progress-track"><div class="progress-fill '+fillClass+'" id="pfill-'+i+'" style="width:'+val+'%"></div></div>'
+      +'<input type="range" min="0" max="100" step="5" value="'+val+'" oninput="updateProgress(\''+item+'\','+i+',this.value)">'
+      +'</div>';
+  }
+  el.innerHTML=html;
+}
+function updateProgress(item,idx,val){
+  val=parseInt(val);
+  progressVals[item]=val;
+  var valEl=document.getElementById('pval-'+idx);
+  var fillEl=document.getElementById('pfill-'+idx);
+  if(valEl)valEl.textContent=val+'%';
+  if(fillEl){
+    fillEl.style.width=val+'%';
+    fillEl.className='progress-fill'+(val===100?' done':val===0?' zero':'');
+  }
+}
+
+/* PHOTOS */
+function handlePhotos(inp){
+  var files=inp.files;if(!files||!files.length)return;
+  var pending=files.length;
+  for(var i=0;i<files.length;i++){
+    (function(file){
+      var r=new FileReader();
+      r.onloadend=function(){
+        if(r.result){sitePhotos.push({url:r.result,name:file.name});}
+        pending--;if(pending===0)renderPhotoGrid();
+      };
+      r.readAsDataURL(file);
+    })(files[i]);
+  }
+  try{inp.value='';}catch(e){}try{inp.type='text';inp.type='file';}catch(e){}
+}
+function deletePhoto(idx){
+  sitePhotos.splice(idx,1);renderPhotoGrid();
+}
+function renderPhotoGrid(){
+  var el=document.getElementById('photo-grid');
+  var html='';
+  for(var i=0;i<sitePhotos.length;i++){
+    html+='<div class="pthumb"><img src="'+sitePhotos[i].url+'" alt="Photo">'
+      +'<button type="button" class="pdel" onclick="deletePhoto('+i+')">&#215;</button></div>';
+  }
+  el.innerHTML=html;
+}
+
+/* PREVIEW */
+function renderPreview(){
+  var el=document.getElementById('preview-content');
+  var site=document.getElementById('f-site').value||'—';
+  var client=document.getElementById('f-client').value||'—';
+  var ref=document.getElementById('f-ref').value||'—';
+  var type=document.getElementById('inst-type').value||'—';
+  var date=document.getElementById('f-date').value||'—';
+  var arrive=document.getElementById('f-arrive').value||'—';
+  var depart=document.getElementById('f-depart').value||'—';
+  var overtime=document.getElementById('f-overtime').value||'';
+  var overtimeReason=document.getElementById('f-overtime-reason').value||'';
+  var weather=document.getElementById('f-weather').value||'—';
+  var manager=document.getElementById('f-manager').value||'—';
+  var overtime=document.getElementById('f-overtime').value||'';
+  var overtimeReason=document.getElementById('f-overtime-reason').value||'';
+  var workDone=document.getElementById('f-work-done').value||'—';
+  var workPlanned=document.getElementById('f-work-planned').value||'—';
+  var toolbox=document.getElementById('f-toolbox').value||'—';
+  var notes=document.getElementById('f-notes').value||'—';
+
+  var teamStr=teamMembers.filter(function(m){return m.trim();}).join(', ')||'None';
+  var casualStr=casualMembers.filter(function(m){return m.trim();}).join(', ')||'None';
+
+  var progHtml='<div class="prog-preview">';
+  for(var i=0;i<PROGRESS_ITEMS.length;i++){
+    var v=progressVals[PROGRESS_ITEMS[i]];
+    var cls=v===100?'done':v===0?'zero':'';
+    progHtml+='<div class="prog-chip">'+PROGRESS_ITEMS[i]+' <span class="'+cls+'">'+v+'%</span></div>';
+  }
+  progHtml+='</div>';
+
+  var photosHtml='';
+  if(sitePhotos.length){
+    photosHtml='<div class="pgrid" style="margin-top:8px">';
+    for(var i=0;i<sitePhotos.length;i++) photosHtml+='<div class="pthumb"><img src="'+sitePhotos[i].url+'" alt="Photo"></div>';
+    photosHtml+='</div>';
+  }
+
+  el.innerHTML='<div class="preview-block"><h4>📍 Site details</h4>'
+    +'<div class="preview-row"><span class="preview-key">Site</span><span class="preview-val">'+site+'</span></div>'
+    +'<div class="preview-row"><span class="preview-key">Client</span><span class="preview-val">'+client+'</span></div>'
+    +'<div class="preview-row"><span class="preview-key">Job ref</span><span class="preview-val">'+ref+'</span></div>'
+    +'<div class="preview-row"><span class="preview-key">Type</span><span class="preview-val">'+type+'</span></div>'
+    +'</div>'
+    +'<div class="preview-block"><h4>📅 Date & time</h4>'
+    +'<div class="preview-row"><span class="preview-key">Date</span><span class="preview-val">'+date+'</span></div>'
+    +'<div class="preview-row"><span class="preview-key">Arrival</span><span class="preview-val">'+arrive+'</span></div>'
+    +'<div class="preview-row"><span class="preview-key">Departure</span><span class="preview-val">'+depart+'</span></div>'
+    +(overtime?'<div class="preview-row"><span class="preview-key">Overtime</span><span class="preview-val">'+overtime+' hrs'+(overtimeReason?' — '+overtimeReason:'')+'</span></div>':'')
+    +'<div class="preview-row"><span class="preview-key">Weather</span><span class="preview-val">'+weather+'</span></div>'
+    +'</div>'
+    +'<div class="preview-block"><h4>👷 Team</h4>'
+    +'<div class="preview-row"><span class="preview-key">Site manager</span><span class="preview-val">'+manager+'</span></div>'
+    +'<div class="preview-row"><span class="preview-key">Team members</span><span class="preview-val">'+teamStr+'</span></div>'
+    +'<div class="preview-row"><span class="preview-key">Casuals</span><span class="preview-val">'+casualStr+'</span></div>'
+    +'</div>'
+    +'<div class="preview-block"><h4>🔧 Work</h4>'
+    +'<div class="preview-row"><span class="preview-key">Work done</span><span class="preview-val" style="white-space:pre-wrap">'+workDone+'</span></div>'
+    +'<div class="preview-row"><span class="preview-key">Work planned</span><span class="preview-val" style="white-space:pre-wrap">'+workPlanned+'</span></div>'
+    +'<div class="preview-row"><span class="preview-key">HSE findings</span><span class="preview-val">'+toggleState.hse.toUpperCase()+'</span></div>'
+    +'<div class="preview-row"><span class="preview-key">Toolbox talk</span><span class="preview-val">'+toolbox+'</span></div>'
+    +'<div class="preview-row"><span class="preview-key">Delays</span><span class="preview-val">'+toggleState.delay.toUpperCase()+'</span></div>'
+    +'<div class="preview-row"><span class="preview-key">Material shortage</span><span class="preview-val">'+toggleState.material.toUpperCase()+'</span></div>'
+    +'</div>'
+    +'<div class="preview-block"><h4>📊 Schedule update</h4>'+progHtml+'</div>'
+    +(sitePhotos.length?'<div class="preview-block"><h4>📷 Site photos ('+sitePhotos.length+')</h4>'+photosHtml+'</div>':'')
+    +(notes!=='—'?'<div class="preview-block"><h4>📝 Notes</h4><p style="font-size:14px;white-space:pre-wrap">'+notes+'</p></div>':'');
+}
+
+/* SHARE */
+function doShare(){
+  var site=document.getElementById('f-site').value||'Site';
+  var client=document.getElementById('f-client').value||'—';
+  var ref=document.getElementById('f-ref').value||'—';
+  var type=document.getElementById('inst-type').value||'—';
+  var date=document.getElementById('f-date').value||'—';
+  var arrive=document.getElementById('f-arrive').value||'—';
+  var depart=document.getElementById('f-depart').value||'—';
+  var weather=document.getElementById('f-weather').value||'—';
+  var manager=document.getElementById('f-manager').value||'—';
+  var workDone=document.getElementById('f-work-done').value||'—';
+  var workPlanned=document.getElementById('f-work-planned').value||'—';
+  var toolbox=document.getElementById('f-toolbox').value||'—';
+  var notes=document.getElementById('f-notes').value||'';
+  var teamStr=teamMembers.filter(function(m){return m.trim();}).join(', ')||'None';
+  var casualStr=casualMembers.filter(function(m){return m.trim();}).join(', ')||'None';
+
+  var text='*THULA MOYA — Daily Report*\n';
+  text+='━━━━━━━━━━━━━━━━━━━━━━\n';
+  text+='*Site:* '+site+'\n';
+  text+='*Client:* '+client+'\n';
+  text+='*Job ref:* '+ref+'\n';
+  text+='*Type:* '+type+'\n';
+  text+='*Date:* '+date+'\n';
+  var overtime=document.getElementById('f-overtime').value||'';
+  var overtimeReason=document.getElementById('f-overtime-reason').value||'';
+  text+='*Arrival:* '+arrive+' | *Departure:* '+depart+'\n';
+  if(overtime) text+='*Overtime:* '+overtime+' hrs'+(overtimeReason?' — '+overtimeReason:'')+'\n';
+  text+='*Weather:* '+weather+'\n';
+  text+='━━━━━━━━━━━━━━━━━━━━━━\n';
+  text+='*👷 Team*\n';
+  text+='*Manager:* '+manager+'\n';
+  text+='*Team:* '+teamStr+'\n';
+  text+='*Casuals:* '+casualStr+'\n';
+  text+='━━━━━━━━━━━━━━━━━━━━━━\n';
+  text+='*✅ Work done today*\n'+workDone+'\n\n';
+  text+='*📅 Work planned for tomorrow*\n'+workPlanned+'\n';
+  text+='━━━━━━━━━━━━━━━━━━━━━━\n';
+  text+='*⚠️ HSE findings:* '+toggleState.hse.toUpperCase();
+  if(toggleState.hse==='yes'){var hd=document.getElementById('f-hse-detail').value;if(hd)text+='\n'+hd;}
+  text+='\n*💬 Toolbox talk:* '+toolbox+'\n';
+  text+='*⏱ Delays:* '+toggleState.delay.toUpperCase();
+  if(toggleState.delay==='yes'){
+    var dd=document.getElementById('f-delay-dur').value;
+    var dc=document.getElementById('f-delay-desc').value;
+    if(dd)text+='\n*Duration:* '+dd;
+    if(dc)text+='\n*Reason:* '+dc;
+  }
+  text+='\n*📦 Material shortage:* '+toggleState.material.toUpperCase();
+  if(toggleState.material==='yes'){var md=document.getElementById('f-material-detail').value;if(md)text+='\n'+md;}
+  text+='\n━━━━━━━━━━━━━━━━━━━━━━\n';
+  text+='*📊 Schedule update*\n';
+  for(var i=0;i<PROGRESS_ITEMS.length;i++) text+=PROGRESS_ITEMS[i]+': *'+progressVals[PROGRESS_ITEMS[i]]+'%*\n';
+  if(notes){text+='━━━━━━━━━━━━━━━━━━━━━━\n*📝 Notes*\n'+notes+'\n';}
+  text+='━━━━━━━━━━━━━━━━━━━━━━\n';
+  text+='📷 Site photos: '+sitePhotos.length+' attached\n';
+
+  if(navigator.share){navigator.share({title:'Thula Moya Daily Report — '+site,text:text}).catch(function(){});}
+  else if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){alert('Report copied! Paste into WhatsApp.');}).catch(function(){fbCopy(text);});}
+  else{fbCopy(text);}
+}
+function fbCopy(t){var ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');alert('Copied!');}catch(e){alert('Copy failed.');}document.body.removeChild(ta);}
+
+/* PRINT — no popup, renders inline then triggers print */
+function doPrint(){
+  var site        = document.getElementById('f-site').value||'—';
+  var client      = document.getElementById('f-client').value||'—';
+  var ref         = document.getElementById('f-ref').value||'—';
+  var type        = document.getElementById('inst-type').value||'—';
+  var date        = document.getElementById('f-date').value||'—';
+  var arrive      = document.getElementById('f-arrive').value||'—';
+  var depart      = document.getElementById('f-depart').value||'—';
+  var weather     = document.getElementById('f-weather').value||'—';
+  var manager     = document.getElementById('f-manager').value||'—';
+  var workDone    = document.getElementById('f-work-done').value||'—';
+  var workPlanned = document.getElementById('f-work-planned').value||'—';
+  var toolbox     = document.getElementById('f-toolbox').value||'—';
+  var notes       = document.getElementById('f-notes').value||'';
+  var hseDetail   = document.getElementById('f-hse-detail').value||'';
+  var delayDur    = document.getElementById('f-delay-dur').value||'';
+  var delayDesc   = document.getElementById('f-delay-desc').value||'';
+  var matDetail   = document.getElementById('f-material-detail').value||'';
+  var overtime    = document.getElementById('f-overtime').value||'';
+  var otReason    = document.getElementById('f-overtime-reason').value||'';
+  var teamStr     = teamMembers.filter(function(m){return m.trim();}).join(', ')||'None';
+  var casualStr   = casualMembers.filter(function(m){return m.trim();}).join(', ')||'None';
+  var logoHtml    = logoUrl?'<img src="'+logoUrl+'" style="height:44px;max-width:130px;object-fit:contain;margin-right:14px;vertical-align:middle">':'';
+
+  /* Progress rows */
+  var progRows='';
+  for(var i=0;i<PROGRESS_ITEMS.length;i++){
+    var v=progressVals[PROGRESS_ITEMS[i]];
+    var bc=v===100?'#1B5E20':v===0?'#DDE0E6':'#2E7D32';
+    progRows+='<tr>'
+      +'<td style="padding:6px 8px;border:1px solid #ddd">'+PROGRESS_ITEMS[i]+'</td>'
+      +'<td style="padding:6px 8px;border:1px solid #ddd;width:55%"><div style="background:#eee;border-radius:6px;height:12px;overflow:hidden"><div style="width:'+v+'%;height:100%;background:'+bc+';border-radius:6px"></div></div></td>'
+      +'<td style="padding:6px 8px;border:1px solid #ddd;text-align:center;font-weight:700;color:'+bc+'">'+v+'%</td>'
+      +'</tr>';
+  }
+
+  /* Photo thumbnails */
+  var photoHtml='';
+  if(sitePhotos.length){
+    photoHtml='<div style="margin-top:16px"><div style="font-size:13px;font-weight:700;color:#1B3A1F;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid #2E7D32">Site photos</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
+    for(var i=0;i<sitePhotos.length;i++) photoHtml+='<img src="'+sitePhotos[i].url+'" style="width:120px;height:90px;object-fit:cover;border-radius:4px;border:1px solid #ddd">';
+    photoHtml+='</div></div>';
+  }
+
+  /* Conditional detail rows */
+  var hseRow='', delayRows='', matRow='';
+  if(toggleState.hse==='yes'&&hseDetail) hseRow='<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>HSE detail</b></td><td style="padding:5px 8px;border:1px solid #ddd">'+hseDetail+'</td></tr>';
+  if(toggleState.delay==='yes'){
+    if(delayDur)  delayRows+='<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Delay duration</b></td><td style="padding:5px 8px;border:1px solid #ddd">'+delayDur+'</td></tr>';
+    if(delayDesc) delayRows+='<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Delay reason</b></td><td style="padding:5px 8px;border:1px solid #ddd;white-space:pre-wrap">'+delayDesc+'</td></tr>';
+  }
+  if(toggleState.material==='yes'&&matDetail) matRow='<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Material detail</b></td><td style="padding:5px 8px;border:1px solid #ddd">'+matDetail+'</td></tr>';
+
+  /* ── BUILD REPORT HTML ── */
+  var R=''
+    /* Header */
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:3px solid #1B3A1F">'
+    +  '<div style="display:flex;align-items:center">'+logoHtml
+    +    '<div><div style="font-size:18px;font-weight:700;color:#1B3A1F">Thula Moya</div>'
+    +    '<div style="font-size:11px;color:#2E7D32;font-weight:600">Project Daily Report</div></div>'
+    +  '</div>'
+    +  '<div style="text-align:right;font-size:11px;color:#555;line-height:1.9"><b>Site:</b> '+site+'<br><b>Date:</b> '+date+'<br><b>Ref:</b> '+ref+'</div>'
+    +'</div>'
+    /* Two-column info */
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">'
+    +  '<div>'
+    +    '<div style="font-size:13px;font-weight:700;color:#1B3A1F;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #2E7D32">Site details</div>'
+    +    '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+    +      '<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Type</b></td><td style="padding:5px 8px;border:1px solid #ddd">'+type+'</td></tr>'
+    +      '<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Client</b></td><td style="padding:5px 8px;border:1px solid #ddd">'+client+'</td></tr>'
+    +      '<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Weather</b></td><td style="padding:5px 8px;border:1px solid #ddd">'+weather+'</td></tr>'
+    +    '</table>'
+    +  '</div>'
+    +  '<div>'
+    +    '<div style="font-size:13px;font-weight:700;color:#1B3A1F;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #2E7D32">Time &amp; team</div>'
+    +    '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+    +      '<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Arrival</b></td><td style="padding:5px 8px;border:1px solid #ddd">'+arrive+'</td></tr>'
+    +      '<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Departure</b></td><td style="padding:5px 8px;border:1px solid #ddd">'+depart+'</td></tr>'
+    +(overtime?'<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Overtime</b></td><td style="padding:5px 8px;border:1px solid #ddd">'+overtime+' hrs'+(otReason?' — '+otReason:'')+'</td></tr>':'')
+    +      '<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Manager</b></td><td style="padding:5px 8px;border:1px solid #ddd">'+manager+'</td></tr>'
+    +      '<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Team</b></td><td style="padding:5px 8px;border:1px solid #ddd">'+teamStr+'</td></tr>'
+    +      '<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Casuals</b></td><td style="padding:5px 8px;border:1px solid #ddd">'+casualStr+'</td></tr>'
+    +    '</table>'
+    +  '</div>'
+    +'</div>'
+    /* Work done */
+    +'<div style="margin-bottom:14px">'
+    +  '<div style="font-size:13px;font-weight:700;color:#1B3A1F;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #2E7D32">Work done today</div>'
+    +  '<p style="font-size:12px;line-height:1.6;white-space:pre-wrap">'+workDone+'</p>'
+    +'</div>'
+    /* Work planned */
+    +'<div style="margin-bottom:14px">'
+    +  '<div style="font-size:13px;font-weight:700;color:#1B3A1F;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #2E7D32">Work planned for tomorrow</div>'
+    +  '<p style="font-size:12px;line-height:1.6;white-space:pre-wrap">'+workPlanned+'</p>'
+    +'</div>'
+    /* HSE table */
+    +'<div style="margin-bottom:14px">'
+    +  '<div style="font-size:13px;font-weight:700;color:#1B3A1F;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #2E7D32">HSE, delays &amp; materials</div>'
+    +  '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+    +    '<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>HSE findings</b></td><td style="padding:5px 8px;border:1px solid #ddd;color:'+(toggleState.hse==='yes'?'#993C1D':'#3B6D11')+';font-weight:700">'+toggleState.hse.toUpperCase()+'</td></tr>'
+    +    hseRow
+    +    '<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Toolbox talk</b></td><td style="padding:5px 8px;border:1px solid #ddd">'+toolbox+'</td></tr>'
+    +    '<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Site delays</b></td><td style="padding:5px 8px;border:1px solid #ddd;color:'+(toggleState.delay==='yes'?'#993C1D':'#3B6D11')+';font-weight:700">'+toggleState.delay.toUpperCase()+'</td></tr>'
+    +    delayRows
+    +    '<tr><td style="padding:5px 8px;border:1px solid #ddd"><b>Material shortage</b></td><td style="padding:5px 8px;border:1px solid #ddd;color:'+(toggleState.material==='yes'?'#993C1D':'#3B6D11')+';font-weight:700">'+toggleState.material.toUpperCase()+'</td></tr>'
+    +    matRow
+    +  '</table>'
+    +'</div>'
+    /* Schedule */
+    +'<div style="margin-bottom:14px">'
+    +  '<div style="font-size:13px;font-weight:700;color:#1B3A1F;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #2E7D32">Schedule update</div>'
+    +  '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+    +    '<thead><tr>'
+    +      '<th style="background:#1B3A1F;color:#fff;padding:6px 8px;text-align:left">Item</th>'
+    +      '<th style="background:#1B3A1F;color:#fff;padding:6px 8px;text-align:left">Progress</th>'
+    +      '<th style="background:#1B3A1F;color:#fff;padding:6px 8px;text-align:center;width:50px">%</th>'
+    +    '</tr></thead>'
+    +    '<tbody>'+progRows+'</tbody>'
+    +  '</table>'
+    +'</div>'
+    +(notes?'<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:700;color:#1B3A1F;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #2E7D32">Notes</div><p style="font-size:12px;line-height:1.6;white-space:pre-wrap">'+notes+'</p></div>':'')
+    +photoHtml
+    +'<div style="margin-top:20px;padding-top:8px;border-top:1px solid #ddd;font-size:10px;color:#aaa;display:flex;justify-content:space-between">'
+    +'<span>Thula Moya — Confidential</span>'
+    +'<span>Generated '+new Date().toLocaleDateString('en-ZA',{day:'2-digit',month:'short',year:'numeric'})+'</span>'
+    +'</div>';
+
+  /* ── BUILD OVERLAY ── */
+  var overlay=document.getElementById('tm-print-overlay');
+  if(overlay) overlay.remove();
+  overlay=document.createElement('div');
+  overlay.id='tm-print-overlay';
+  overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column';
+  document.body.appendChild(overlay);
+  document.body.style.overflow='hidden';
+
+  /* Toolbar */
+  var tb=document.createElement('div');
+  tb.style.cssText='position:sticky;top:0;flex-shrink:0;height:52px;background:#1B3A1F;display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:10px;z-index:1';
+  tb.innerHTML='<button type="button" onclick="closePrintOverlay()" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:7px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;-webkit-appearance:none">&#x2715; Close</button>'
+    +'<span style="color:#fff;font-size:13px;font-weight:600;flex:1;text-align:center">Report Preview</span>'
+    +'<button type="button" onclick="firePrint()" style="background:#2E7D32;color:#fff;border:none;border-radius:7px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;-webkit-appearance:none">&#x1F5A8; Print/PDF</button>';
+  overlay.appendChild(tb);
+
+  /* Report content — note: we use R not html to avoid variable shadowing */
+  var wrap=document.createElement('div');
+  wrap.style.cssText='padding:20px;flex:1;font-family:Arial,sans-serif;font-size:12px;color:#222';
+  wrap.innerHTML=R;
+  overlay.appendChild(wrap);
+}
+
+function closePrintOverlay(){
+  var o=document.getElementById('tm-print-overlay');
+  if(o) o.remove();
+  document.body.style.overflow='';
+}
+
+function firePrint(){
+  var client  = (document.getElementById('f-client').value||'').trim();
+  var site    = (document.getElementById('f-site').value||'').trim();
+  var date    = document.getElementById('f-date').value||'';
+  /* Use client name first, fall back to site name, then generic */
+  var pdfC    = client||site||'Daily Report';
+  var oldTitle= document.title;
+  document.title='ThulaM oya - '+pdfC+' - Daily Report'+(date?' - '+date:'');
+
+  var ps=document.createElement('style');
+  ps.id='tm-ps';
+  ps.textContent='@media print{'
+    +'#app{display:none!important}'
+    +'#tm-print-overlay{position:static!important;overflow:visible!important}'
+    +'#tm-print-overlay>div:first-child{display:none!important}'
+    +'@page{margin:10mm}'
+    +'}';
+  document.head.appendChild(ps);
+  window.print();
+  setTimeout(function(){
+    document.title=oldTitle;
+    var el=document.getElementById('tm-ps');if(el)el.remove();
+  },1500);
+}
+
+
+/* SUBMIT TO SHEET */
+function doSubmit(){
+  var site=document.getElementById('f-site').value||'';
+  var manager=document.getElementById('f-manager').value||'';
+  if(!site){alert('Please enter a Site / Project name before submitting.');return;}
+  if(!manager){alert('Please enter a Site Manager name before submitting.');return;}
+  var btn=document.getElementById('submit-btn');
+  btn.textContent='⏳ Submitting...';btn.disabled=true;btn.style.opacity='0.7';
+  var payload={
+    reportType:'Daily Report',
+    site:site,client:document.getElementById('f-client').value,
+    jobRef:document.getElementById('f-ref').value,
+    instType:document.getElementById('inst-type').value,
+    date:document.getElementById('f-date').value,
+    arrivalTime:document.getElementById('f-arrive').value,
+    departureTime:document.getElementById('f-depart').value,
+    overtimeHours:document.getElementById('f-overtime').value||'0',
+    overtimeReason:document.getElementById('f-overtime-reason').value||'',
+    weather:document.getElementById('f-weather').value,
+    siteManager:manager,
+    teamMembers:teamMembers.filter(function(m){return m.trim();}),
+    casuals:casualMembers.filter(function(m){return m.trim();}),
+    workDone:document.getElementById('f-work-done').value,
+    workPlanned:document.getElementById('f-work-planned').value,
+    hseFindings:toggleState.hse,
+    hseDetail:document.getElementById('f-hse-detail').value,
+    toolboxTalk:document.getElementById('f-toolbox').value,
+    siteDelays:toggleState.delay,
+    delayDuration:document.getElementById('f-delay-dur').value,
+    delayDesc:document.getElementById('f-delay-desc').value,
+    materialShortage:toggleState.material,
+    materialDetail:document.getElementById('f-material-detail').value,
+    notes:document.getElementById('f-notes').value,
+    photoCount:sitePhotos.length,
+    progress:progressVals
+  };
+  fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+  .then(function(){
+    btn.textContent='✅ Submitted!';btn.style.background='#1B5E20';btn.style.opacity='1';
+    alert('Daily report for "'+site+'" submitted successfully to Google Sheets!');
+    setTimeout(function(){btn.textContent='📊 Submit to Google Sheet';btn.style.background=getComputedStyle(document.documentElement).getPropertyValue('--green').trim()||'#1B5E20';btn.disabled=false;},3000);
+  })
+  .catch(function(err){
+    btn.textContent='📊 Submit to Google Sheet';btn.style.opacity='1';btn.disabled=false;
+    alert('Submission failed. Check your internet connection.\n\nError: '+err.message);
+  });
+}
+
+/* INSTALL */
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();deferredPrompt=e;
+  var banner=document.getElementById('inst-banner');
+  banner.querySelector('span').innerHTML='📲 <strong>Install as an app</strong> on your device!';
+  banner.style.display='flex';
+  banner.querySelector('.ibtn').textContent='Install now';
+  banner.querySelector('.ibtn').onclick=function(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(function(){deferredPrompt=null;banner.style.display='none';});}};
+});
+function showInstallHelp(){
+  var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  if(isIOS){alert('Install on iPhone/iPad:\n\n1. Tap the Share button ⬆️ in Safari\n2. Tap "Add to Home Screen"\n3. Tap "Add"');}
+  else{alert('Install on Android:\n\n1. Open in Chrome\n2. Tap the three-dot menu ⋮\n3. Tap "Add to Home screen"');}
+}
+if(/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream&&!window.navigator.standalone){document.getElementById('inst-banner').style.display='flex';}
+
+/* INIT */
+renderMembers('team');
+renderMembers('casual');
+document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+// Set current time as arrival
+var now=new Date();
+var hh=String(now.getHours()).padStart(2,'0');
+var mm=String(now.getMinutes()).padStart(2,'0');
+document.getElementById('f-arrive').value=hh+':'+mm;
+</script>
+</body>
+</html>
